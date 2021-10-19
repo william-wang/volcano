@@ -393,10 +393,7 @@ func newSchedulerCache(config *rest.Config, schedulerName string, defaultQueue s
 			FilterFunc: func(obj interface{}) bool {
 				switch v := obj.(type) {
 				case *v1.Node:
-					if !responsibleForNode(v.Name, mySchedulerPodName, c) {
-						return false
-					}
-					return true
+					return responsibleForNode(v.Name, mySchedulerPodName, c)
 				default:
 					return false
 				}
@@ -483,10 +480,7 @@ func newSchedulerCache(config *rest.Config, schedulerName string, defaultQueue s
 			FilterFunc: func(obj interface{}) bool {
 				switch v := obj.(type) {
 				case *vcv1beta1.PodGroup:
-					if !responsibleForPodGroup(v, mySchedulerPodName, c) {
-						return false
-					}
-					return true
+					return responsibleForPodGroup(v, mySchedulerPodName, c)
 				default:
 					return false
 				}

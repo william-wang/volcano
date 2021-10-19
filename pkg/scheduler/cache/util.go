@@ -35,7 +35,13 @@ func responsibleForPod(pod *v1.Pod, schedulerName string, mySchedulerPodName str
 		return false
 	}
 	if c != nil {
-		schedulerPodName, err := c.Get(pod.OwnerReferences[0].Name)
+		var key string
+		if len(pod.OwnerReferences[0].Name) == 0 {
+			key = pod.OwnerReferences[0].Name
+		} else {
+			key = pod.Name
+		}
+		schedulerPodName, err := c.Get(key)
 		if err != nil {
 			klog.Errorf("Failed to get scheduler by hash algorithm, err: %v", err)
 		}
@@ -48,7 +54,6 @@ func responsibleForPod(pod *v1.Pod, schedulerName string, mySchedulerPodName str
 
 // responsibleForNode returns true if the Node is assigned to current scheduler in multi-scheduler scenario
 func responsibleForNode(nodeName string, mySchedulerPodName string, c *consistent.Consistent) bool {
-	klog.V(3).Infof("ent:qer responsibleForNode. nodeName:%s", nodeName)
 	if c != nil {
 		schedulerPodName, err := c.Get(nodeName)
 		if err != nil {
@@ -64,7 +69,13 @@ func responsibleForNode(nodeName string, mySchedulerPodName string, c *consisten
 // responsibleForPodGroup returns true if Job which PodGroup belongs is assigned to current scheduler in multi-schedulers scenario
 func responsibleForPodGroup(pg *scheduling.PodGroup, mySchedulerPodName string, c *consistent.Consistent) bool {
 	if c != nil {
-		schedulerPodName, err := c.Get(pg.OwnerReferences[0].Name)
+		var key string
+		if len(pg.OwnerReferences) != 0 {
+			key = pg.OwnerReferences[0].Name
+		} else {
+			key = pg.Name
+		}
+		schedulerPodName, err := c.Get(key)
 		if err != nil {
 			klog.Errorf("Failed to get scheduler by hash algorithm, err: %v", err)
 		}
@@ -83,7 +94,10 @@ func getMultiSchedulerInfo() (schedulerPodName string, c *consistent.Consistent)
 	if multiSchedulerEnable == "true" {
 		klog.V(3).Infof("multiSchedulerEnable true")
 		schedulerNumStr := os.Getenv("SCHEDULER_NUM")
-		schedulerNum, _ := strconv.Atoi(schedulerNumStr)
+		schedulerNum, err := strconv.Atoi(schedulerNumStr)
+		if err != nil {
+			schedulerNum = 1
+		}
 		index := strings.LastIndex(mySchedulerPodName, "-")
 		baseName := mySchedulerPodName[0:index]
 		c = consistent.New()
