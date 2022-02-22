@@ -59,6 +59,13 @@ type Resource struct {
 	MaxTaskNum int
 }
 
+type NodeUsage struct {
+	cpuUsageAvg map[string]float64
+	memUsageAvg map[string]float64
+//	cpuUsageAvg5m float64
+//	memUsageAvg5M float64
+}
+
 // EmptyResource creates a empty resource object and returns
 func EmptyResource() *Resource {
 	return &Resource{}

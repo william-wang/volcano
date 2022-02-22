@@ -54,6 +54,7 @@ type NodeInfo struct {
 
 	Allocatable *Resource
 	Capability  *Resource
+	ResourceUsage NodeUsage
 
 	Tasks             map[TaskID]*TaskInfo
 	NumaInfo          *NumatopoInfo

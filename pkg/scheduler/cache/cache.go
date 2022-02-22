@@ -58,7 +58,11 @@ import (
 	vcinformerv1 "volcano.sh/apis/pkg/client/informers/externalversions/scheduling/v1beta1"
 	"volcano.sh/volcano/cmd/scheduler/app/options"
 	schedulingapi "volcano.sh/volcano/pkg/scheduler/api"
+	"encoding/json"
+	"github.com/prometheus/client_golang/api"
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"volcano.sh/volcano/pkg/scheduler/metrics"
+
 )
 
 func init() {
@@ -1154,3 +1158,70 @@ func (sc *SchedulerCache) recordPodGroupEvent(podGroup *schedulingapi.PodGroup, 
 	}
 	sc.Recorder.Eventf(pg, eventType, reason, msg)
 }
+
+func (sc *SchedulerCache)SetMetricsConf(conf map[string]string) {
+	sc.metricsConf = conf
+}
+
+func (sc *SchedulerCache)GetMetricsData() {
+	address := sc.metricsConf["address"]
+	port := sc.metricsConf["port"]
+	client, err := api.NewClient(api.Config{
+		Address: "address:port",
+	})
+	if err != nil {
+		fmt.Printf("Error creating client: %v\n", err)
+	}
+	v1api := v1.NewAPI(client)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	// result, warnings, err := v1api.Query(ctx, "up", time.Now())
+	//add the lock
+	nodeUsage := make(map[string]schedulingapi.NodeUsage)
+	sc.Mutex.Lock()
+	for k ,_ := range sc.Nodes {
+		nodeUsage[k] = schedulingapi.NodeUsage{}
+	}
+	sc.Mutex.Unlock()
+
+	//
+	supportedPeriods := []string{"5m"}
+	supportedMetrics := []string{"cpu_usage_avg", "mem_usage_avg"}
+	for _, period := range supportedPeriods {
+		for _, node := range nodeUsage {
+			for _, metric := range supportedMetrics {
+				queryStr := fmt.Sprintf("%s_%s{node=%s}",metric, period, node)
+				usage, warnings, err := v1api.Query(ctx, queryStr, time.Now())
+				if err != nil {
+					klog.Errorf("Error querying Prometheus: %v", err)
+				}
+				if len(warnings) > 0 {
+					klog.V(5).Infof("Warning querying Prometheus: %v", warnings)
+				}
+				klog.V(5).Infof("nodeUsage[%][%s] = %s",metric, period, node)
+				nodeUsage[node][period] = usage
+			}
+		}
+	}
+	//sc.setMetricsData
+	sc.setMetricsData(nodeUsage)
+}
+
+func (sc *SchedulerCache)setMetricsData(usageInfo map[string]schedulingapi.NodeUsage)  {
+	sc.Mutex.Lock()
+	defer sc.Mutex.Unlock()
+	for k, v := range usageInfo {
+		nodeInfo, ok := sc.Nodes[k]
+		if ok {
+			nodeInfo.ResourceUsage = v
+		}
+
+	}
+	//debug
+	for node, nodeInfo := range sc.Nodes {
+		usage := nodeInfo.ResourceUsage
+		klog.V(5).Infof("usage: %v - %v",node, usage)
+	}
+
+}
+
