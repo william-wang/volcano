@@ -620,9 +620,8 @@ func (sc *SchedulerCache) Run(stopCh <-chan struct{}) {
 	go wait.Until(sc.processBindTask, time.Millisecond*20, stopCh)
 
 	// Get metrics data
-        //interval, _ := strconv.Atoi(sc.metricsConf["interval"])
-	//go wait.Until(sc.GetMetricsData, time.Duration(interval), stopCh)
 	go wait.Until(sc.GetMetricsData, time.Duration(3600), stopCh)
+	//go wait.Until(sc.GetMetricsData, sc.metricsConf["interval"], stopCh)
 }
 
 // WaitForCacheSync sync the cache with the api server
@@ -1199,7 +1198,7 @@ func (sc *SchedulerCache)GetMetricsData() {
 
 	//
 	supportedPeriods := []string{"5m"}
-	supportedMetrics := []string{"cpu_usage_avg", "mem_usage_avg"}
+	supportedMetrics := []string{"cpuUsageAvg", "memUsageAvg"}
 	for _, period := range supportedPeriods {
 		for node, usage := range nodeUsageMap {
 			for _, metric := range supportedMetrics {
