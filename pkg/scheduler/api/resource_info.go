@@ -60,8 +60,8 @@ type Resource struct {
 }
 
 type NodeUsage struct {
-	cpuUsageAvg map[string]float64
-	memUsageAvg map[string]float64
+	CpuUsageAvg map[string]float64
+	MemUsageAvg map[string]float64
 //	cpuUsageAvg5m float64
 //	memUsageAvg5M float64
 }

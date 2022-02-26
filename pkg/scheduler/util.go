@@ -43,7 +43,7 @@ tiers:
   - name: nodeorder
 `
 
-func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []conf.Configuration, error) {
+func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []conf.Configuration, map[string]string, error) {
 	var actions []framework.Action
 
 	schedulerConf := &conf.SchedulerConfiguration{}
@@ -82,7 +82,7 @@ func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []
 		}
 	}
 
-	return actions, schedulerConf.Tiers, schedulerConf.Configurations, nil
+	return actions, schedulerConf.Tiers, schedulerConf.Configurations, schedulerConf.MetricsConfiguration, nil
 }
 
 func readSchedulerConf(confPath string) (string, error) {

@@ -116,7 +116,7 @@ func (pc *Scheduler) runOnce() {
 func (pc *Scheduler) loadSchedulerConf() {
 	var err error
 	pc.once.Do(func() {
-		pc.actions, pc.plugins, pc.configurations, err = unmarshalSchedulerConf(defaultSchedulerConf)
+		pc.actions, pc.plugins, pc.configurations, pc.metricsConf, err = unmarshalSchedulerConf(defaultSchedulerConf)
 		if err != nil {
 			klog.Errorf("unmarshal scheduler config %s failed: %v", defaultSchedulerConf, err)
 			panic("invalid default configuration")
@@ -132,7 +132,7 @@ func (pc *Scheduler) loadSchedulerConf() {
 		}
 	}
 
-	actions, plugins, configurations, err := unmarshalSchedulerConf(config)
+	actions, plugins, configurations, metricsConf, err := unmarshalSchedulerConf(config)
 	if err != nil {
 		klog.Errorf("scheduler config %s is invalid: %v", config, err)
 		return
@@ -143,6 +143,7 @@ func (pc *Scheduler) loadSchedulerConf() {
 	pc.actions = actions
 	pc.plugins = plugins
 	pc.configurations = configurations
+	pc.metricsConf = metricsConf
 	pc.mutex.Unlock()
 }
 

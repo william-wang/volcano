@@ -60,7 +60,7 @@ import (
 	schedulingapi "volcano.sh/volcano/pkg/scheduler/api"
 	"encoding/json"
 	"github.com/prometheus/client_golang/api"
-	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	prometheusv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"volcano.sh/volcano/pkg/scheduler/metrics"
 
 )
@@ -88,6 +88,7 @@ type SchedulerCache struct {
 	// schedulerName is the name for volcano scheduler
 	schedulerName      string
 	nodeSelectorLabels map[string]string
+	metricsConf        map[string]string
 
 	podInformer                infov1.PodInformer
 	nodeInformer               infov1.NodeInformer
@@ -618,6 +619,9 @@ func (sc *SchedulerCache) Run(stopCh <-chan struct{}) {
 	go wait.Until(sc.processCleanupJob, 0, stopCh)
 
 	go wait.Until(sc.processBindTask, time.Millisecond*20, stopCh)
+
+	// Get metrics data
+	go wait.Until(sc.GetMetricsData, sc.metricsConf["interval"], stopCh)
 }
 
 // WaitForCacheSync sync the cache with the api server
@@ -1172,26 +1176,26 @@ func (sc *SchedulerCache)GetMetricsData() {
 	if err != nil {
 		fmt.Printf("Error creating client: %v\n", err)
 	}
-	v1api := v1.NewAPI(client)
+	v1api := prometheusv1.NewAPI(client)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// result, warnings, err := v1api.Query(ctx, "up", time.Now())
 	//add the lock
-	nodeUsage := make(map[string]schedulingapi.NodeUsage)
+	nodeUsageMap := make(map[string]schedulingapi.NodeUsage)
 	sc.Mutex.Lock()
 	for k ,_ := range sc.Nodes {
-		nodeUsage[k] = schedulingapi.NodeUsage{}
+		nodeUsageMap[k] = schedulingapi.NodeUsage{}
 	}
 	sc.Mutex.Unlock()
 
 	//
 	supportedPeriods := []string{"5m"}
-	supportedMetrics := []string{"cpu_usage_avg", "mem_usage_avg"}
+	supportedMetrics := []string{"cpuUsageAvg", "memUsageAvg"}
 	for _, period := range supportedPeriods {
-		for _, node := range nodeUsage {
+		for node, _ := range nodeUsageMap {
 			for _, metric := range supportedMetrics {
 				queryStr := fmt.Sprintf("%s_%s{node=%s}",metric, period, node)
-				usage, warnings, err := v1api.Query(ctx, queryStr, time.Now())
+				res, warnings, err := v1api.Query(ctx, queryStr, time.Now())
 				if err != nil {
 					klog.Errorf("Error querying Prometheus: %v", err)
 				}
@@ -1199,12 +1203,20 @@ func (sc *SchedulerCache)GetMetricsData() {
 					klog.V(5).Infof("Warning querying Prometheus: %v", warnings)
 				}
 				klog.V(5).Infof("nodeUsage[%][%s] = %s",metric, period, node)
-				nodeUsage[node][period] = usage
+				usage := nodeUsageMap[node]
+				switch metric {
+				case "cpuUsageAvg":
+					usage.CpuUsageAvg[period] = res
+				case "memUsageAvg":
+					usage.MemUsageAvg[period] = res
+				}
+				//klog.V(5).Infof("nodeUsage[%][%s] = %s",metric, period, node)
+
 			}
 		}
 	}
 	//sc.setMetricsData
-	sc.setMetricsData(nodeUsage)
+	sc.setMetricsData(nodeUsageMap)
 }
 
 func (sc *SchedulerCache)setMetricsData(usageInfo map[string]schedulingapi.NodeUsage)  {
