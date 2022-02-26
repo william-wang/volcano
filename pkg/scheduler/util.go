@@ -26,6 +26,7 @@ import (
 	"volcano.sh/volcano/pkg/scheduler/conf"
 	"volcano.sh/volcano/pkg/scheduler/framework"
 	"volcano.sh/volcano/pkg/scheduler/plugins"
+        "k8s.io/klog"
 )
 
 var defaultSchedulerConf = `
@@ -43,14 +44,18 @@ tiers:
   - name: nodeorder
 `
 
-func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []conf.Configuration, error) {
+func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []conf.Configuration, map[string]string, error) {
 	var actions []framework.Action
 
 	schedulerConf := &conf.SchedulerConfiguration{}
 
+	klog.V(5).Infof("unmarshalSchedulerConf %s", confStr)
 	if err := yaml.Unmarshal([]byte(confStr), schedulerConf); err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
+	klog.V(5).Infof("unmarshalSchedulerConf %v", schedulerConf)
+	klog.V(5).Infof("unmarshalSchedulerConf %v", schedulerConf.MetricsConfiguration)
+
 	// Set default settings for each plugin if not set
 	for i, tier := range schedulerConf.Tiers {
 		// drf with hierarchy enabled
@@ -69,7 +74,7 @@ func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []
 			plugins.ApplyPluginConfDefaults(&schedulerConf.Tiers[i].Plugins[j])
 		}
 		if hdrf && proportion {
-			return nil, nil, nil, fmt.Errorf("proportion and drf with hierarchy enabled conflicts")
+			return nil, nil, nil, nil, fmt.Errorf("proportion and drf with hierarchy enabled conflicts")
 		}
 	}
 
@@ -78,11 +83,11 @@ func unmarshalSchedulerConf(confStr string) ([]framework.Action, []conf.Tier, []
 		if action, found := framework.GetAction(strings.TrimSpace(actionName)); found {
 			actions = append(actions, action)
 		} else {
-			return nil, nil, nil, fmt.Errorf("failed to find Action %s, ignore it", actionName)
+			return nil, nil, nil, nil, fmt.Errorf("failed to find Action %s, ignore it", actionName)
 		}
 	}
 
-	return actions, schedulerConf.Tiers, schedulerConf.Configurations, nil
+	return actions, schedulerConf.Tiers, schedulerConf.Configurations, schedulerConf.MetricsConfiguration, nil
 }
 
 func readSchedulerConf(confPath string) (string, error) {

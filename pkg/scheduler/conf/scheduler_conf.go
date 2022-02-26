@@ -25,7 +25,7 @@ type SchedulerConfiguration struct {
 	// Configurations is configuration for actions
 	Configurations []Configuration `yaml:"configurations"`
 	//
-	MetricsConfiguration map[string]string `yaml:"metricsConfiguration"`
+	MetricsConfiguration map[string]string `yaml:"metrics"`
 }
 
 // Tier defines plugin tier

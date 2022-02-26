@@ -8511,6 +8511,10 @@ data:
       - name: proportion
       - name: nodeorder
       - name: binpack
+    metrics:
+      address: 94.74.97.5
+      port: 9090
+      interval: 5
 ---
 # Source: volcano/templates/scheduler.yaml
 kind: ClusterRole
@@ -8627,7 +8631,7 @@ spec:
       serviceAccount: volcano-scheduler
       containers:
         - name: volcano-scheduler
-          image: volcanosh/vc-scheduler:latest
+          image: volcanosh/vc-scheduler:0223-01
           args:
             - --logtostderr
             - --scheduler-conf=/volcano.scheduler/volcano-scheduler.conf

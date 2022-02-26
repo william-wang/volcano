@@ -84,6 +84,11 @@ func (pc *Scheduler) Run(stopCh <-chan struct{}) {
 	pc.loadSchedulerConf()
 	go pc.watchSchedulerConf(stopCh)
 	// Start cache for policy.
+
+       	for k, v := range pc.metricsConf {
+          klog.V(4).Infof("metricsConf %v:%v", k, v)
+          klog.V(4).Infof("test")
+       	}
 	pc.cache.SetMetricsConf(pc.metricsConf)
 	go pc.cache.Run(stopCh)
 	pc.cache.WaitForCacheSync(stopCh)
@@ -114,13 +119,18 @@ func (pc *Scheduler) runOnce() {
 }
 
 func (pc *Scheduler) loadSchedulerConf() {
+	klog.V(4).Infof("Start loadSchedulerConf ...")
 	var err error
 	pc.once.Do(func() {
-		pc.actions, pc.plugins, pc.configurations, err = unmarshalSchedulerConf(defaultSchedulerConf)
+		pc.actions, pc.plugins, pc.configurations, pc.metricsConf, err = unmarshalSchedulerConf(defaultSchedulerConf)
 		if err != nil {
 			klog.Errorf("unmarshal scheduler config %s failed: %v", defaultSchedulerConf, err)
 			panic("invalid default configuration")
 		}
+        	for k, v := range pc.metricsConf {
+	          klog.V(4).Infof("metricsConf %v:%v", k, v)
+	          klog.V(4).Infof("test")
+        	}
 	})
 
 	var config string
@@ -132,7 +142,12 @@ func (pc *Scheduler) loadSchedulerConf() {
 		}
 	}
 
-	actions, plugins, configurations, err := unmarshalSchedulerConf(config)
+	actions, plugins, configurations, metricsConf, err := unmarshalSchedulerConf(config)
+        for k, v := range metricsConf {
+          klog.V(4).Infof("metricsConf %v:%v", k, v)
+          klog.V(4).Infof("test")
+        }
+
 	if err != nil {
 		klog.Errorf("scheduler config %s is invalid: %v", config, err)
 		return
@@ -143,6 +158,7 @@ func (pc *Scheduler) loadSchedulerConf() {
 	pc.actions = actions
 	pc.plugins = plugins
 	pc.configurations = configurations
+        pc.metricsConf = metricsConf
 	pc.mutex.Unlock()
 }
 
