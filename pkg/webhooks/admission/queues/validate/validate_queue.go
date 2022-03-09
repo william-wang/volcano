@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"k8s.io/api/admission/v1beta1"
-	whv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	whv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog"
@@ -44,13 +44,13 @@ var service = &router.AdmissionService{
 
 	Config: config,
 
-	ValidatingConfig: &whv1beta1.ValidatingWebhookConfiguration{
-		Webhooks: []whv1beta1.ValidatingWebhook{{
+	ValidatingConfig: &whv1.ValidatingWebhookConfiguration{
+		Webhooks: []whv1.ValidatingWebhook{{
 			Name: "validatequeue.volcano.sh",
-			Rules: []whv1beta1.RuleWithOperations{
+			Rules: []whv1.RuleWithOperations{
 				{
-					Operations: []whv1beta1.OperationType{whv1beta1.Create, whv1beta1.Update, whv1beta1.Delete},
-					Rule: whv1beta1.Rule{
+					Operations: []whv1.OperationType{whv1.Create, whv1.Update, whv1.Delete},
+					Rule: whv1.Rule{
 						APIGroups:   []string{schedulingv1beta1.SchemeGroupVersion.Group},
 						APIVersions: []string{schedulingv1beta1.SchemeGroupVersion.Version},
 						Resources:   []string{"queues"},

@@ -22,7 +22,7 @@ import (
 	"strconv"
 
 	"k8s.io/api/admission/v1beta1"
-	whv1beta1 "k8s.io/api/admissionregistration/v1beta1"
+	whv1 "k8s.io/api/admissionregistration/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
 
@@ -51,13 +51,13 @@ var service = &router.AdmissionService{
 	Path: "/jobs/mutate",
 	Func: Jobs,
 
-	MutatingConfig: &whv1beta1.MutatingWebhookConfiguration{
-		Webhooks: []whv1beta1.MutatingWebhook{{
+	MutatingConfig: &whv1.MutatingWebhookConfiguration{
+		Webhooks: []whv1.MutatingWebhook{{
 			Name: "mutatejob.volcano.sh",
-			Rules: []whv1beta1.RuleWithOperations{
+			Rules: []whv1.RuleWithOperations{
 				{
-					Operations: []whv1beta1.OperationType{whv1beta1.Create},
-					Rule: whv1beta1.Rule{
+					Operations: []whv1.OperationType{whv1.Create},
+					Rule: whv1.Rule{
 						APIGroups:   []string{"batch.volcano.sh"},
 						APIVersions: []string{"v1alpha1"},
 						Resources:   []string{"jobs"},
