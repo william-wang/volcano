@@ -75,6 +75,8 @@ func Serve(w io.Writer, r *http.Request, admit AdmitFunc) {
 func createResponse(reviewResponse *admissionv1.AdmissionResponse, ar *admissionv1.AdmissionReview) admissionv1.AdmissionReview {
 	response := admissionv1.AdmissionReview{}
 	if reviewResponse != nil {
+		response.APIVersion = "admission.k8s.io/v1"
+		response.Kind = "AdmissionReview"
 		response.Response = reviewResponse
 		response.Response.UID = ar.Request.UID
 	}
