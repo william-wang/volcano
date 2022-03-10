@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	whv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"
@@ -63,7 +63,7 @@ type patchOperation struct {
 }
 
 // PodGroups mutate podgroups.
-func PodGroups(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func PodGroups(ar admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	klog.V(3).Infof("Mutating %s podgroup %s.", ar.Request.Operation, ar.Request.Name)
 
 	podgroup, err := schema.DecodePodGroup(ar.Request.Object, ar.Request.Resource)
@@ -73,7 +73,7 @@ func PodGroups(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	var patchBytes []byte
 	switch ar.Request.Operation {
-	case v1beta1.Create:
+	case admissionv1.Create:
 		patchBytes, err = createPodGroupPatch(podgroup)
 	default:
 		return util.ToAdmissionResponse(fmt.Errorf("invalid operation `%s`, "+
@@ -81,14 +81,14 @@ func PodGroups(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	}
 
 	if err != nil {
-		return &v1beta1.AdmissionResponse{
+		return &admissionv1.AdmissionResponse{
 			Allowed: false,
 			Result:  &metav1.Status{Message: err.Error()},
 		}
 	}
 
-	pt := v1beta1.PatchTypeJSONPatch
-	return &v1beta1.AdmissionResponse{
+	pt := admissionv1.PatchTypeJSONPatch
+	return &admissionv1.AdmissionResponse{
 		Allowed:   true,
 		Patch:     patchBytes,
 		PatchType: &pt,

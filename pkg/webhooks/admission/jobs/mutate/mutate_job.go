@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"k8s.io/api/admission/v1beta1"
+	admissionv1 "k8s.io/api/admission/v1"
 	whv1 "k8s.io/api/admissionregistration/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/klog"
@@ -75,7 +75,7 @@ type patchOperation struct {
 }
 
 // Jobs mutate jobs.
-func Jobs(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func Jobs(ar admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	klog.V(3).Infof("mutating jobs")
 
 	job, err := schema.DecodeJob(ar.Request.Object, ar.Request.Resource)
@@ -85,7 +85,7 @@ func Jobs(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 
 	var patchBytes []byte
 	switch ar.Request.Operation {
-	case v1beta1.Create:
+	case admissionv1.Create:
 		patchBytes, _ = createPatch(job)
 	default:
 		err = fmt.Errorf("expect operation to be 'CREATE' ")
@@ -93,11 +93,11 @@ func Jobs(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	}
 
 	klog.V(3).Infof("AdmissionResponse: patch=%v", string(patchBytes))
-	reviewResponse := v1beta1.AdmissionResponse{
+	reviewResponse := admissionv1.AdmissionResponse{
 		Allowed: true,
 		Patch:   patchBytes,
 	}
-	pt := v1beta1.PatchTypeJSONPatch
+	pt := admissionv1.PatchTypeJSONPatch
 	reviewResponse.PatchType = &pt
 
 	return &reviewResponse

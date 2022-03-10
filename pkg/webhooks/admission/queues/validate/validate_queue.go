@@ -19,10 +19,10 @@ package validate
 import (
 	"context"
 	"fmt"
+	admissionv1 "k8s.io/api/admission/v1"
 	"strconv"
 	"strings"
 
-	"k8s.io/api/admission/v1beta1"
 	whv1 "k8s.io/api/admissionregistration/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -64,7 +64,7 @@ var service = &router.AdmissionService{
 var config = &router.AdmissionServiceConfig{}
 
 // AdmitQueues is to admit queues and return response.
-func AdmitQueues(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func AdmitQueues(ar admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	klog.V(3).Infof("Admitting %s queue %s.", ar.Request.Operation, ar.Request.Name)
 
 	queue, err := schema.DecodeQueue(ar.Request.Object, ar.Request.Resource)
@@ -73,9 +73,9 @@ func AdmitQueues(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	}
 
 	switch ar.Request.Operation {
-	case v1beta1.Create, v1beta1.Update:
+	case admissionv1.Create, admissionv1.Update:
 		err = validateQueue(queue)
-	case v1beta1.Delete:
+	case admissionv1.Delete:
 		err = validateQueueDeleting(ar.Request.Name)
 	default:
 		return util.ToAdmissionResponse(fmt.Errorf("invalid operation `%s`, "+
@@ -83,13 +83,13 @@ func AdmitQueues(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	}
 
 	if err != nil {
-		return &v1beta1.AdmissionResponse{
+		return &admissionv1.AdmissionResponse{
 			Allowed: false,
 			Result:  &metav1.Status{Message: err.Error()},
 		}
 	}
 
-	return &v1beta1.AdmissionResponse{
+	return &admissionv1.AdmissionResponse{
 		Allowed: true,
 	}
 }
