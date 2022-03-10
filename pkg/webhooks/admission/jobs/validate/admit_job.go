@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/api/admission/v1"
+	admissionv1 "k8s.io/api/admission/v1"
 	whv1 "k8s.io/api/admissionregistration/v1"
 	v1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
@@ -73,7 +73,7 @@ var service = &router.AdmissionService{
 var config = &router.AdmissionServiceConfig{}
 
 // AdmitJobs is to admit jobs and return response.
-func AdmitJobs(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
+func AdmitJobs(ar admissionv1.AdmissionReview) *admissionv1.AdmissionResponse {
 	klog.V(3).Infof("admitting jobs -- %s", ar.Request.Operation)
 
 	job, err := schema.DecodeJob(ar.Request.Object, ar.Request.Resource)
@@ -81,13 +81,13 @@ func AdmitJobs(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 		return util.ToAdmissionResponse(err)
 	}
 	var msg string
-	reviewResponse := v1beta1.AdmissionResponse{}
+	reviewResponse := admissionv1.AdmissionResponse{}
 	reviewResponse.Allowed = true
 
 	switch ar.Request.Operation {
-	case v1beta1.Create:
+	case admissionv1.Create:
 		msg = validateJobCreate(job, &reviewResponse)
-	case v1beta1.Update:
+	case admissionv1.Update:
 		oldJob, err := schema.DecodeJob(ar.Request.OldObject, ar.Request.Resource)
 		if err != nil {
 			return util.ToAdmissionResponse(err)
@@ -107,7 +107,7 @@ func AdmitJobs(ar v1beta1.AdmissionReview) *v1beta1.AdmissionResponse {
 	return &reviewResponse
 }
 
-func validateJobCreate(job *v1alpha1.Job, reviewResponse *v1beta1.AdmissionResponse) string {
+func validateJobCreate(job *v1alpha1.Job, reviewResponse *admissionv1.AdmissionResponse) string {
 	var msg string
 	taskNames := map[string]string{}
 	var totalReplicas int32
