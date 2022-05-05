@@ -16,7 +16,11 @@ FROM golang:1.17 AS builder
 WORKDIR /go/src/volcano.sh/
 ADD . volcano
 RUN cd volcano && make vc-scheduler
+
 FROM alpine:latest
+
+RUN sed -i 's/https:/http:/g' /etc/apk/repositories && \
+    apk add gcompat
 
 COPY --from=builder /go/src/volcano.sh/volcano/_output/bin/vc-scheduler /vc-scheduler
 ENTRYPOINT ["/vc-scheduler"]

@@ -19,5 +19,8 @@ RUN cd volcano && make vc-controller-manager
 
 FROM alpine:latest
 
+RUN sed -i 's/https:/http:/g' /etc/apk/repositories && \
+    apk add gcompat
+
 COPY --from=builder /go/src/volcano.sh/volcano/_output/bin/vc-controller-manager /vc-controller-manager
 ENTRYPOINT ["/vc-controller-manager"]
