@@ -53,6 +53,9 @@ case $LOCAL_OS in
   "darwin"*)
     LOCAL_OS='darwin'
     ;;
+  "msys")
+    LOCAL_OS='windows'
+    ;;
   *)
     echo "This system's OS ${LOCAL_OS} isn't recognized/supported"
     exit 1
@@ -61,6 +64,14 @@ esac
 
 # Step1. install helm binary
 if [[ ! -f "${HELM_BIN_DIR}/version.helm.${HELM_VER}" ]] ; then
+    case $LOCAL_OS in
+      "windows")
+        echo "Please install \"elm-${HELM_VER}-${LOCAL_OS}\" from \"github.com/helm/helm/releases\" to \"${HELM_BIN_DIR}\", then \"touch ${HELM_BIN_DIR}/version.helm.${HELM_VER}\" to verfiy"
+        exit 1
+        ;;
+      *)
+        ;;
+    esac
     TD=$(mktemp -d)
     cd "${TD}" && \
         curl -Lo "${TD}/helm.tgz" "https://get.helm.sh/helm-${HELM_VER}-${LOCAL_OS}-amd64.tar.gz" && \

@@ -141,6 +141,10 @@ spec:
     spec:
       serviceAccountName: {{ .Release.Name }}-admission
       restartPolicy: Never
+      {{- if .Values.basic.image_pull_secret }}
+      imagePullSecrets:
+        - name: {{.Values.basic.image_pull_secret }}
+      {{- end }}
       containers:
         - name: main
           image: {{.Values.basic.admission_image_name}}:{{.Values.basic.image_tag_version}}
